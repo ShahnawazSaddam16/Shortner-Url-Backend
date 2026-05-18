@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 
 const generateQR = require("../utils/qrGenerator");
 const malwareCheck = require("../middleware/malewareChecker");
+const {authMiddleware} = require("../middleware/authMiddleware");
 
 const validUrl = require("valid-url");
 const { nanoid } = require("nanoid");
@@ -12,7 +13,7 @@ const bcrypt = require("bcryptjs");
 
 dotenv.config();
 
-router.post("/shortner-url", async (req, res) => {
+router.post("/shortner-url", authMiddleware, async (req, res) => {
   try {
     const { originalUrl, customCode, expiryDate, password } = req.body;
 
@@ -61,6 +62,8 @@ router.post("/shortner-url", async (req, res) => {
     }
 
     const newUrl = await Url.create({
+      user: req.user._id,
+      email: req.user.email,
       originalUrl,
       shortCode,
       customCode: !!customCode,
