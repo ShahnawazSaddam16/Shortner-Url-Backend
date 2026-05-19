@@ -39,9 +39,7 @@ router.post("/shortner-url", authMiddleware, async (req, res) => {
 
     let shortCode = customCode || nanoid(6);
 
-    const existing = await Url.findOne({
-      shortCode,
-    });
+    const existing = await Url.findOne({ shortCode });
 
     if (existing) {
       return res.status(400).json({
@@ -74,12 +72,14 @@ router.post("/shortner-url", authMiddleware, async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Short URL created successfully",
+      data: {
+        ...newUrl.toObject(),
+        shortUrl,
+      },
       user: {
         name: req.user.name,
         email: req.user.email,
       },
-      shortUrl,
-      data: newUrl,
     });
 
   } catch (err) {
@@ -90,12 +90,42 @@ router.post("/shortner-url", authMiddleware, async (req, res) => {
   }
 });
 
+router.get("/user-urls", authMiddleware, async (req, res) => {
+  try {
+    const user_urls = await Url.find({
+      email: req.user.email,
+    }).sort({ createdAt: -1 });
+
+    const formatted = user_urls.map((u) => ({
+      _id: u._id,
+      originalUrl: u.originalUrl,
+      shortCode: u.shortCode,
+      shortUrl: `${process.env.BASE_URL}/${u.shortCode}`,
+      clicks: u.clicks,
+      qrCode: u.qrCode,
+      createdAt: u.createdAt,
+    }));
+
+    res.status(200).json({
+      success: true,
+      message: "Data Fetched Successfully",
+      user_urls: formatted,
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+});
+
 router.get("/:code", async (req, res) => {
   try {
     const { code } = req.params;
     const { password } = req.query;
 
-    const url = await Url.findOne({ shortCode: code });
+    const url = await Url.findOne({ shortCode: code }).select("+password");
 
     if (!url) {
       return res.status(404).json({
