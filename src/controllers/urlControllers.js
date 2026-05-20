@@ -9,6 +9,8 @@ const { nanoid } = require("nanoid");
 const generateQR = require("../utils/qrGenerator");
 const malwareCheck = require("../middleware/malewareChecker");
 const { authMiddleware } = require("../middleware/authMiddleware");
+const { ReturnDocument } = require("mongodb");
+const auth = require("../Models/auth");
 
 dotenv.config();
 
@@ -81,7 +83,6 @@ router.post("/shortner-url", authMiddleware, async (req, res) => {
         email: req.user.email,
       },
     });
-
   } catch (err) {
     res.status(500).json({
       success: false,
@@ -107,10 +108,7 @@ router.get("/user-urls", authMiddleware, async (req, res) => {
     }));
 
     const totalShortUrls = formatted.length;
-    const totalClicks = formatted.reduce(
-      (sum, item) => sum + item.clicks,
-      0
-    );
+    const totalClicks = formatted.reduce((sum, item) => sum + item.clicks, 0);
 
     res.status(200).json({
       success: true,
@@ -178,12 +176,119 @@ router.get("/:code", async (req, res) => {
     await url.save();
 
     return res.redirect(url.originalUrl);
-
   } catch (err) {
     res.status(500).json({
       success: false,
       message: err.message,
     });
+  }
+});
+
+router.put("/updating-url/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { originalUrl, expiryDate, password, shortCode } = req.body;
+
+    const existingUrl = await Url.findOne({
+      _id: id,
+      createdBy: req.user._id,
+    });
+
+    if (!existingUrl) {
+      return res.status(404).json({
+        success: false,
+        message: "Url not found or unauthorized",
+      });
+    }
+
+    if (originalUrl) {
+      if (!validUrl.isUri(originalUrl)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid Url",
+        });
+      }
+
+      if (malwareCheck(originalUrl)) {
+        return res.status(400).json({
+          success: false,
+          message: "Unsafe Url detected",
+        });
+      }
+
+      existingUrl.originalUrl = originalUrl;
+    }
+
+    if (shortCode && shortCode !== existingUrl.shortCode) {
+      const codeExists = await Url.findOne({ shortCode });
+
+      if (codeExists) {
+        return res.status(400).json({
+          success: false,
+          message: "Short code already exists",
+        });
+      }
+
+      existingUrl.shortCode = shortCode;
+    }
+
+    if (expiryDate) {
+      existingUrl.expiresAt = expiryDate;
+    }
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      existingUrl.password = hashedPassword;
+    }
+
+    await existingUrl.save();
+
+    res.status(200).json({
+      success: true,
+      message: "URL updated successfully",
+      data: {
+        _id: existingUrl._id,
+        originalUrl: existingUrl.originalUrl,
+        shortCode: existingUrl.shortCode,
+        shortUrl: `${process.env.BASE_URL}/${existingUrl.shortCode}`,
+        expiresAt: existingUrl.expiresAt,
+        qrCode: existingUrl.qrCode,
+        clicks: existingUrl.clicks,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+});
+
+router.delete("/deleting-url/:id", authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedUrl = await Url.findOneAndDelete({
+      _id: id,
+      createdBy: req.user._id,
+    });
+
+    if (!deleteUrl) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Url not found or aunthorized" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "URL deleted successfully",
+      data: {
+        _id: deletedUrl._id,
+        shortCode: deletedUrl.shortCode,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

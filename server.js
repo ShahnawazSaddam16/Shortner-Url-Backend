@@ -20,7 +20,7 @@ app.use(
       "http://127.0.0.1:5500",
       "http://localhost:3000",
     ],
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
   })
 );
