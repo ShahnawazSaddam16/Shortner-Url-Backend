@@ -274,9 +274,10 @@ router.delete("/deleting-url/:id", authMiddleware, async (req, res) => {
     });
 
     if (!deletedUrl) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Url not found or aunthorized" });
+      return res.status(404).json({
+        success: false,
+        message: "URL not found or you are not authorized to delete it",
+      });
     }
 
     return res.status(200).json({
@@ -288,7 +289,10 @@ router.delete("/deleting-url/:id", authMiddleware, async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 });
 
