@@ -194,9 +194,9 @@ router.delete("/delete-account", authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
 
-    await Url.deleteMany({ userId });
+    await Url.deleteMany({ createdBy: userId });
 
-    await Plans.deleteMany({ userId });
+    await Plans.deleteMany({user: userId });
 
     const deletedUser = await User.findByIdAndDelete(userId);
 
