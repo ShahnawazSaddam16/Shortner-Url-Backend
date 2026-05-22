@@ -188,4 +188,27 @@ router.post("/logout", authMiddleware, async (req, res) => {
   }
 });
 
+router.delete("/delete-account", authMiddleware, async(req,res)=>{
+  try{
+    const deletedUser = await User.findByIdAndDelete(req.user._id);
+
+    if(!deletedUser){
+      return res.status(404).json({success: false,message: "User not Found"});
+    }
+
+    res.clearCookie("token");
+
+    return res.status(200).json({
+      success: true,
+      message: "Account Deleted Successfully",
+      user: {
+        name: deletedUser.name,
+        email: deletedUser.email
+      },
+    });
+  } catch(err){
+    return res.status(500).json({success: false, message: err.message});
+  }
+});
+
 module.exports = router;
