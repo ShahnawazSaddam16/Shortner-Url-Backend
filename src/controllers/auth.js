@@ -4,6 +4,8 @@ const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
+const Url = require("../Models/Url");
+const Plans = require("../Models/Plan");
 const { authMiddleware } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -188,27 +190,41 @@ router.post("/logout", authMiddleware, async (req, res) => {
   }
 });
 
-router.delete("/delete-account", authMiddleware, async(req,res)=>{
-  try{
-    const deletedUser = await User.findByIdAndDelete(req.user._id);
+router.delete("/delete-account", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user._id;
 
-    if(!deletedUser){
-      return res.status(404).json({success: false,message: "User not Found"});
+    await Url.deleteMany({ userId });
+
+    await Plans.deleteMany({ userId });
+
+    const deletedUser = await User.findByIdAndDelete(userId);
+
+    if (!deletedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not Found",
+      });
     }
 
     res.clearCookie("token");
 
     return res.status(200).json({
       success: true,
-      message: "Account Deleted Successfully",
+      message: "Account and all related data deleted successfully",
       user: {
         name: deletedUser.name,
-        email: deletedUser.email
+        email: deletedUser.email,
       },
     });
-  } catch(err){
-    return res.status(500).json({success: false, message: err.message});
+
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 });
+
 
 module.exports = router;

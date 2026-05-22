@@ -3,7 +3,6 @@ const router = express.Router();
 const Plans = require("../Models/plans");
 const { authMiddleware } = require("../middleware/authMiddleware");
 
-
 router.post("/plan", authMiddleware, async (req, res) => {
     try {
         const { planStatus, planCategory } = req.body;
@@ -16,9 +15,13 @@ router.post("/plan", authMiddleware, async (req, res) => {
         }
 
         const plan = await Plans.findOneAndUpdate(
-            { user: req.user._id, email: req.user.email },
-            { planStatus, planCategory },
-            { new: true, upsert: true } 
+            { user: req.user._id },
+            {
+                planStatus,
+                planCategory,
+                email: req.user.email
+            },
+            { new: true, upsert: true }
         );
 
         return res.status(200).json({
@@ -36,7 +39,6 @@ router.post("/plan", authMiddleware, async (req, res) => {
     }
 });
 
-
 router.put("/plan", authMiddleware, async (req, res) => {
     try {
         const { planStatus, planCategory } = req.body;
@@ -49,8 +51,12 @@ router.put("/plan", authMiddleware, async (req, res) => {
         }
 
         const plan = await Plans.findOneAndUpdate(
-            { user: req.user._id, email: req.user.email },
-            { planStatus, planCategory },
+            { user: req.user._id },
+            {
+                planStatus,
+                planCategory,
+                email: req.user.email
+            },
             { new: true }
         );
 
@@ -76,12 +82,9 @@ router.put("/plan", authMiddleware, async (req, res) => {
     }
 });
 
-
 router.get("/plan", authMiddleware, async (req, res) => {
     try {
-        const plan = await Plans.findOne({
-            email
-        });
+        const plan = await Plans.findOne({ user: req.user._id });
 
         if (!plan) {
             return res.status(404).json({
