@@ -1,3 +1,17 @@
-const express = require("express");
-const router = express.Router();
-const Plans = require("../Models/pl")
+const mongoose = require("mongoose");
+
+const plansSchema = new mongoose.Schema({
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+
+  email: { type: String, required: true, lowercase: true, trim: true },
+
+  planStatus: {type: String, required: true},
+
+  planCategory: {type: String, required: true}
+}, {timestamps: true});
+
+module.exports = mongoose.model("Plans", plansSchema);
