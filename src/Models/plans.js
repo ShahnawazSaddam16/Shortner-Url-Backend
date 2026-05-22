@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
 const plansSchema = new mongoose.Schema({
-  createdBy: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
 
-  email: { type: String, required: true, lowercase: true, trim: true },
+  email: { type: String, required: true, lowercase: true, trim: true, unique: true },
 
   planStatus: {type: String, required: true},
 

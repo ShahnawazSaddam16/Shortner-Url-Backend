@@ -11,6 +11,7 @@ const generateQR = require("../utils/qrGenerator");
 const malwareCheck = require("../middleware/malewareChecker");
 const { authMiddleware } = require("../middleware/authMiddleware");
 const auth = require("../Models/auth");
+const Plans = require("../Models/plans");
 
 dotenv.config();
 
@@ -27,17 +28,6 @@ const shortUrlLimiter = rateLimit({
 
 router.post("/shortner-url", authMiddleware, async (req, res) => {
   try {
-    const userUrlCount = await Url.countDocuments({
-      createdBy: req.user._id,
-    });
-
-    if (userUrlCount >= 20) {
-      return res.status(403).json({
-        success: false,
-        message: "Free plan limit reached. Upgrade to create more URLs.",
-      });
-    }
-
     const { originalUrl, customCode, expiryDate, password } = req.body;
 
     if (!originalUrl) {
@@ -58,6 +48,30 @@ router.post("/shortner-url", authMiddleware, async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Unsafe URL detected",
+      });
+    }
+
+    const userPlan = await Plans.findOne({
+      user: req.user._id,
+      email: req.user.email,
+    });
+
+    let limit = 100;
+
+    if (userPlan) {
+      if (userPlan.planStatus === "basic") limit = 1000;
+      else if (userPlan.planStatus === "pro") limit = 5000;
+      else if (userPlan.planStatus === "premium") limit = 15000;
+    }
+
+    const userUrlCount = await Url.countDocuments({
+      createdBy: req.user._id,
+    });
+
+    if (userUrlCount >= limit) {
+      return res.status(403).json({
+        success: false,
+        message: "Plan limit reached. Upgrade your plan.",
       });
     }
 
@@ -316,6 +330,55 @@ router.delete("/deleting-url/:id", authMiddleware, async (req, res) => {
       message: err.message,
     });
   }
+});
+
+router.post("/plan", authMiddleware, async (req, res) => {
+    try {
+        const { planStatus, planCategory } = req.body;
+
+        if (!planStatus || !planCategory) {
+            return res.status(400).json({
+                success: false,
+                message: "Please fill all fields"
+            });
+        }
+
+        const existingPlan = await Plans.findOne({
+            user: req.user._id,
+            email: req.user.email,
+            planCategory
+        });
+
+        if (existingPlan) {
+            existingPlan.planStatus = planStatus;
+            await existingPlan.save();
+
+            return res.status(200).json({
+                success: true,
+                message: "Plan updated successfully",
+                data: existingPlan
+            });
+        }
+
+        const newPlan = await Plans.create({
+            user: req.user._id,
+            email: req.user.email,
+            planStatus,
+            planCategory
+        });
+
+        return res.status(201).json({
+            success: true,
+            message: "Plan created successfully",
+            data: newPlan
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+            error: error.message
+        });
+    }
 });
 
 module.exports = router;
