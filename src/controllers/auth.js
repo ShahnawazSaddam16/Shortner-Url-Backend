@@ -5,7 +5,7 @@ const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const Url = require("../Models/Url");
-const Plans = require("../Models/Plan");
+const Plans = require("../Models/plans");
 const { authMiddleware } = require("../middleware/authMiddleware");
 
 const router = express.Router();
