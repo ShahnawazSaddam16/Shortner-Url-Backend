@@ -6,6 +6,7 @@ const cookieParser = require("cookie-parser");
 const dbConnection = require("./src/utils/dbConnection");
 const UrlControllers = require("./src/controllers/urlControllers");
 const Auth = require("./src/controllers/auth");
+const Plans = require("./src/controllers/plans");
 
 const app = express();
 dotenv.config();
@@ -44,6 +45,7 @@ dbConnection();
 //Routes
 app.use("/api/auth", Auth, limiter);
 app.use("/api", UrlControllers, limiter);
+app.use("/api", Plans, limiter);
 
 //App Listen
 app.listen(PORT,(err)=>{
