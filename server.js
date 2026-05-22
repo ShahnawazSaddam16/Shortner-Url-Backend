@@ -44,8 +44,8 @@ dbConnection();
 
 //Routes
 app.use("/api/auth", limiter, Auth);
-app.use("/api", limiter, UrlControllers);
 app.use("/api", limiter, Plans);
+app.use("/api", limiter, UrlControllers);
 
 //App Listen
 app.listen(PORT,(err)=>{
