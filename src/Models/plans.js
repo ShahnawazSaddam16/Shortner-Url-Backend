@@ -28,6 +28,14 @@ const plansSchema = new mongoose.Schema({
     stripePaymentIntentId: {
         type: String,
         default: null
+    },
+    startDate: {
+        type: Date,
+        default: null
+    },
+    expiryDate: {
+        type: Date,
+        default: null
     }
 }, { timestamps: true });
 

@@ -61,6 +61,15 @@ router.post("/plan", authMiddleware, async (req, res) => {
             });
         }
 
+        const startDate = new Date();
+        const expiryDate = new Date();
+
+        if (planStatus.toLowerCase() === "annual") {
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+        } else if (planStatus.toLowerCase() === "monthly") {
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
+        }
+
         const plan = await Plans.findOneAndUpdate(
             { createdBy: req.user._id },
             {
@@ -69,6 +78,8 @@ router.post("/plan", authMiddleware, async (req, res) => {
                 email: req.user.email,
                 paymentStatus: "paid",
                 stripePaymentIntentId: paymentIntentId,
+                startDate,
+                expiryDate,
             },
             { new: true, upsert: true }
         );
@@ -115,6 +126,15 @@ router.put("/plan", authMiddleware, async (req, res) => {
             });
         }
 
+        const startDate = new Date();
+        const expiryDate = new Date();
+
+        if (planStatus.toLowerCase() === "annual") {
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+        } else if (planStatus.toLowerCase() === "monthly") {
+            expiryDate.setMonth(expiryDate.getMonth() + 1);
+        }
+
         const plan = await Plans.findOneAndUpdate(
             { createdBy: req.user._id },
             {
@@ -123,6 +143,8 @@ router.put("/plan", authMiddleware, async (req, res) => {
                 email: req.user.email,
                 paymentStatus: "paid",
                 stripePaymentIntentId: paymentIntentId,
+                startDate,
+                expiryDate,
             },
             { new: true }
         );
@@ -157,6 +179,15 @@ router.get("/plan", authMiddleware, async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: "Plan not found"
+            });
+        }
+
+        if (plan.expiryDate && new Date() > new Date(plan.expiryDate)) {
+            await Plans.deleteOne({ _id: plan._id });
+
+            return res.status(404).json({
+                success: false,
+                message: "Plan expired and deleted"
             });
         }
 
