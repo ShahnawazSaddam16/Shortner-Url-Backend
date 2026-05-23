@@ -20,6 +20,14 @@ const plansSchema = new mongoose.Schema({
     planCategory: {
         type: String,
         required: true
+    },
+    paymentStatus: {
+        type: String,
+        default: "pending"
+    },
+    stripePaymentIntentId: {
+        type: String,
+        default: null
     }
 }, { timestamps: true });
 
