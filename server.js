@@ -7,6 +7,7 @@ const dbConnection = require("./src/utils/dbConnection");
 const UrlControllers = require("./src/controllers/urlControllers");
 const Auth = require("./src/controllers/auth");
 const Plans = require("./src/controllers/plans");
+const Contact = require("./src/controllers/contact");
 
 const app = express();
 dotenv.config();
@@ -46,6 +47,7 @@ dbConnection();
 app.use("/api/auth", limiter, Auth);
 app.use("/api", limiter, Plans);
 app.use("/api", limiter, UrlControllers);
+app.use("/api", limiter, Contact);
 
 //App Listen
 app.listen(PORT,(err)=>{

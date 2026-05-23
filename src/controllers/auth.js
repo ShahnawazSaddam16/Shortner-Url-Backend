@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const Url = require("../Models/Url");
+const Contact = require("../Models/contact");
 const Plans = require("../Models/plans");
 const { authMiddleware } = require("../middleware/authMiddleware");
 
@@ -197,6 +198,8 @@ router.delete("/delete-account", authMiddleware, async (req, res) => {
     await Url.deleteMany({ createdBy: userId });
 
     await Plans.deleteMany({createdBy: userId });
+
+    await Contact.deleteMany({createdBy: userId});
 
     const deletedUser = await User.findByIdAndDelete(userId);
 
